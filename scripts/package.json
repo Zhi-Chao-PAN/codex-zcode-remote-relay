@@ -5,6 +5,10 @@
   "type": "module",
   "description": "Codex -> ZCode Web Remote Control relay: scripts, codec, policy, and tests.",
   "scripts": {
+    "delegate": "node src/delegate.mjs",
+    "dispatch": "node src/dispatch.mjs",
+    "watch": "node src/watch.mjs",
+    "collect": "node src/collect.mjs",
     "test": "node --test \"tests/**/*.test.mjs\""
   },
   "engines": {

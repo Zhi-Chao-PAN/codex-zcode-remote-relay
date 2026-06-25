@@ -45,6 +45,10 @@ while (Date.now() <= deadline) {
     process.stdout.write(collected.stdout || '');
     process.exit(collected.status ?? 0);
   }
+  if (last?.state === 'blocked') {
+    process.stdout.write(`${JSON.stringify(last, null, 2)}\n`);
+    process.exit(0);
+  }
   await new Promise(resolve => setTimeout(resolve, intervalMs));
 }
 

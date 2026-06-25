@@ -347,11 +347,33 @@ Billing safety:
 - To intentionally allow paid fallback, set `ZCODE_ALLOW_PAID_FALLBACK=1` or explicitly request a DeepSeek model after user approval.
 - When dispatching a stronger model worker, inspect `fallbackAttempts` and `resolvedModel` in the dispatch output before assuming the intended model was used.
 
-## Async Delegation
+## Hybrid Delegation
 
-Use this mode to avoid making Codex wait while ZCode works.
+Default to the hybrid delegate entry for normal ZCode work. It dispatches the job, waits in the current Codex turn for a bounded window, collects immediately if ZCode finishes, and otherwise leaves the job for the heartbeat monitor to recover later.
 
-Dispatch and return immediately:
+Recommended default:
+
+```powershell
+node C:\Users\22304\.codex\skills\zcode-remote-relay\scripts\src\delegate.mjs --content-file <handoff.md>
+```
+
+Default behavior:
+
+- wait up to 15 minutes in the current Codex thread
+- poll every 15 seconds
+- collect immediately when status becomes completed
+- return `blocked-in-turn` if ZCode asks for input
+- return `handoff-to-heartbeat` if the bounded wait expires while the job is still running
+- never dispatch another job by itself
+
+Control the wait window:
+
+```powershell
+node C:\Users\22304\.codex\skills\zcode-remote-relay\scripts\src\delegate.mjs --content-file <handoff.md> --wait-ms 900000 --interval-ms 15000
+node C:\Users\22304\.codex\skills\zcode-remote-relay\scripts\src\delegate.mjs --content-file <handoff.md> --no-wait
+```
+
+Use direct async dispatch only when Codex should not wait at all:
 
 ```powershell
 node C:\Users\22304\.codex\skills\zcode-remote-relay\scripts\src\dispatch.mjs --content-file <handoff.md>
@@ -376,6 +398,8 @@ Watch within the current turn only when the user wants to wait:
 ```powershell
 node C:\Users\22304\.codex\skills\zcode-remote-relay\scripts\src\watch.mjs --job <jobId> --timeout 600000 --interval 15000
 ```
+
+`watch.mjs` now exits immediately for `blocked` jobs and auto-collects completed jobs. For new work, prefer `delegate.mjs`; use `watch.mjs` when a job already exists.
 
 List or clear local jobs:
 

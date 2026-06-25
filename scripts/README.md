@@ -39,6 +39,7 @@ Codex review, integration gate, mark-result (accepted / amended / rejected)
 | `src/pool-policy.mjs` | Worker-count limits per pool type, `validateWorkerOwnership` overlap detection. |
 | `src/relay-lock.mjs` | File-mutex for the serial control plane (`fs.openSync('wx')` + stale detection). |
 | `src/result-schema.mjs` | Structured worker result contract (`zcode-relay-result/v1`) and parser. |
+| `src/delegate.mjs` / `src/delegate-utils.mjs` | Hybrid orchestration: dispatch, bounded in-turn wait, auto-collect, heartbeat handoff on timeout. |
 | `src/job-store.mjs` | Job/pool/handoff/result ledger under `~/.codex/zcode-remote-relay/`. |
 | `src/session-utils.mjs` | Snapshot summarization + `extractMessageText` (used by `collect` to detect completion). |
 | `src/dispatch.mjs` / `status.mjs` / `collect.mjs` / `pool-*.mjs` / `prepare.mjs` | CLI entry points. |
@@ -84,6 +85,7 @@ Coverage:
 | `edit-mode-policy.test.mjs` | `isSafeAutoTrustRoot` deny-list (Users/AppData/.ssh/...), `inferCommonRoot`, full `resolveEditMode` matrix, trusted-root persistence round-trip, dry-run safety. |
 | `model-policy.test.mjs` | Alias resolution, heuristic routing, `fallbackModelKeys` ordering, **paid-fallback filtering** (default off, env-gated), registry integrity. |
 | `pool-policy.test.mjs` | Pool-type normalization, worker-count limits (2/3/4/5+ matrix), ownership-overlap detection (case-insensitive). |
+| `delegate-utils.test.mjs` | Hybrid wait defaults, argument stripping, and watch-result classification. |
 | `job-store.test.mjs` | `zjob_`/`zpool_` id shape + uniqueness, marker format, sha256 digest correctness, preview truncation. |
 | `result-schema.test.mjs` | Structured result prompt, schema normalization, fenced JSON extraction, latest-result selection, terminal status classification. |
 | `session-utils.test.mjs` | `summarizeSnapshot` role counting + field fallbacks, `extractMessageText` shape matrix (the completion detector `collect` relies on). |
@@ -117,6 +119,35 @@ They also ask the worker to include exactly one fenced JSON result block:
 `status.mjs` and `collect.mjs` prefer the structured result when present, then
 fall back to the legacy marker and runtime state. This is intentionally
 backward-compatible with existing jobs.
+
+## Hybrid delegate mode
+
+For normal Codex -> ZCode work, prefer:
+
+```powershell
+npm run delegate -- --content-file <handoff.md>
+```
+
+This wraps:
+
+```text
+dispatch -> bounded watch -> collect
+```
+
+Defaults:
+
+- wait up to 15 minutes
+- poll every 15 seconds
+- auto-collect completed jobs
+- return `blocked-in-turn` if ZCode needs input
+- return `handoff-to-heartbeat` if the wait window expires and the heartbeat monitor should recover it later
+
+Useful knobs:
+
+```powershell
+npm run delegate -- --content-file <handoff.md> --wait-ms 900000 --interval-ms 15000
+npm run delegate -- --content-file <handoff.md> --no-wait
+```
 
 ### Not covered (needs a live connection or is out of scope)
 
