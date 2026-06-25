@@ -493,3 +493,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File C:\Users\22304\.codex\skills
 - If no ACK or assistant message appears, run `snapshot` and check `runtimeStatus`, `messageCount`, and `lastMessagePreview`.
 - If the QR/remote link expires, ask the user for a fresh ZCode remote QR screenshot or link, then run `configure_from_qr.py`.
 - If Codex should stop while ZCode works, use `dispatch` and later `status`/`collect`; do not keep a long `watch` running unless the user explicitly wants to wait.
+- After a ZCode app upgrade, run a live low-risk regression before trusting the relay for real work: `prepare -> snapshot -> dispatch` a read-only ACK task -> `status -> collect -> mark-result`. The local test suite includes a fake WebSocket client test, but only the live regression can catch undocumented server protocol changes.

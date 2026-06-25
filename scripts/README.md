@@ -87,6 +87,7 @@ Coverage:
 | `job-store.test.mjs` | `zjob_`/`zpool_` id shape + uniqueness, marker format, sha256 digest correctness, preview truncation. |
 | `result-schema.test.mjs` | Structured result prompt, schema normalization, fenced JSON extraction, latest-result selection, terminal status classification. |
 | `session-utils.test.mjs` | `summarizeSnapshot` role counting + field fallbacks, `extractMessageText` shape matrix (the completion detector `collect` relies on). |
+| `zcode-remote-client.test.mjs` | Fake WebSocket integration for auth challenge/ack, workspace-list, bridge-open, RPC frame round-trip, and URL redaction. |
 
 ## Structured result schema
 
@@ -119,9 +120,11 @@ backward-compatible with existing jobs.
 
 ### Not covered (needs a live connection or is out of scope)
 
-- `zcode-remote-client.mjs` WebSocket handshake and RPC round-trips — require a
-  paired ZCode instance. The RPC id generation is unit-tested indirectly via
-  `rpc-codec`; the monotonic id is now collision-free by construction.
+- Real ZCode WebSocket handshake and RPC round-trips against the installed app.
+  `zcode-remote-client.test.mjs` covers the local client state machine with a
+  fake WebSocket, but an actual ZCode update can still change the undocumented
+  server protocol. Run a live regression after ZCode upgrades:
+  `prepare -> snapshot -> dispatch ACK -> status -> collect`.
 - CLI entry scripts (`dispatch`/`collect`/`prepare`/...) — they orchestrate the
   client + ledger + lock; integration tests would need a live relay.
 
