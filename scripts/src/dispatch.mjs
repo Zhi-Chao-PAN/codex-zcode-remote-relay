@@ -1,5 +1,7 @@
-﻿import fs from 'node:fs';
+import fs from 'node:fs';
+import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 import { parseArgs } from './args.mjs';
 import { openClient } from './bootstrap.mjs';
 import {
@@ -46,6 +48,10 @@ const validationGate = typeof args['validation-gate'] === 'string' ? args['valid
 const editMode = typeof args['edit-mode'] === 'string' ? args['edit-mode'] : null;
 const trustedRoot = typeof args['trusted-root'] === 'string' ? args['trusted-root'] : null;
 const editModeReason = typeof args['edit-mode-reason'] === 'string' ? args['edit-mode-reason'] : '';
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const statusScript = path.join(scriptDir, 'status.mjs');
+const collectScript = path.join(scriptDir, 'collect.mjs');
+
 const finalPrompt = `${content.trim()}
 
 Relay metadata:
@@ -179,8 +185,8 @@ try {
     doneMarker,
     resultSchema: RELAY_RESULT_SCHEMA,
     next: {
-      status: `node C:\\Users\\22304\\.codex\\skills\\zcode-remote-relay\\scripts\\src\\status.mjs --job ${jobId}`,
-      collect: `node C:\\Users\\22304\\.codex\\skills\\zcode-remote-relay\\scripts\\src\\collect.mjs --job ${jobId}`
+      status: `node "${statusScript}" --job ${jobId}`,
+      collect: `node "${collectScript}" --job ${jobId}`
     }
   }, null, 2));
 } catch (error) {

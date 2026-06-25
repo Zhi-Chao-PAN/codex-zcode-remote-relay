@@ -52,13 +52,13 @@ test('isSafeAutoTrustRoot rejects the filesystem root', () => {
 
 test('isSafeAutoTrustRoot rejects denied segments', () => {
   for (const bad of [
-    'C:\\Users\\22304',
+    'C:\\Users\\Example',
     'C:\\Windows\\System32',
-    'C:\\Users\\22304\\AppData\\Local',
-    'C:\\Users\\22304\\Desktop',
-    'C:\\Users\\22304\\Downloads',
+    'C:\\Users\\Example\\AppData\\Local',
+    'C:\\Users\\Example\\Desktop',
+    'C:\\Users\\Example\\Downloads',
     'D:\\.codex\\stuff',
-    'C:\\Users\\22304\\.ssh'
+    'C:\\Users\\Example\\.ssh'
   ]) {
     assert.equal(isSafeAutoTrustRoot(bad), false, `should reject ${bad}`);
   }
@@ -73,8 +73,8 @@ test('isSafeAutoTrustRoot accepts a path with no denied segment', () => {
 
 test('isSafeAutoTrustRoot denies paths under Users (stricter than manual trust)', () => {
   // This documents the intended asymmetry: a human can manually trust
-  // C:\Users\22304\Documents\Codex, but auto-trust refuses anything under Users.
-  assert.equal(isSafeAutoTrustRoot('C:\\Users\\22304\\Documents\\Codex\\proj'), false);
+  // C:\Users\Example\Documents\Codex, but auto-trust refuses anything under Users.
+  assert.equal(isSafeAutoTrustRoot('C:\\Users\\Example\\Documents\\Codex\\proj'), false);
 });
 
 test('isSafeAutoTrustRoot rejects empty/null', () => {
@@ -85,7 +85,7 @@ test('isSafeAutoTrustRoot rejects empty/null', () => {
 
 // Deny-list is case-insensitive
 test('isSafeAutoTrustRoot deny check is case-insensitive', () => {
-  assert.equal(isSafeAutoTrustRoot('c:\\users\\22304'), false);
+  assert.equal(isSafeAutoTrustRoot('c:\\users\\example'), false);
   assert.equal(isSafeAutoTrustRoot('C:\\APPDATA\\x'), false);
 });
 
@@ -220,7 +220,7 @@ test('ensureTrustedRootForFiles: dryRun reports wouldAdd without writing', () =>
 });
 
 test('ensureTrustedRootForFiles: refuses unsafe root even with autoTrust', () => {
-  const result = ensureTrustedRootForFiles(['C:\\Users\\22304\\evil.js'], { autoTrust: true });
+  const result = ensureTrustedRootForFiles(['C:\\Users\\Example\\evil.js'], { autoTrust: true });
   assert.equal(result.trustedRoot, null);
   assert.equal(result.wouldAdd, false);
   assert.match(result.error || '', /unsafe root|Refusing/i);

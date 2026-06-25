@@ -1,4 +1,4 @@
-﻿import fs from 'node:fs';
+import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +23,9 @@ import { editPolicyPromptBlock, ensureTrustedRootForFiles, resolveEditMode } fro
 const args = parseArgs();
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const dispatchScript = path.join(currentDir, 'dispatch.mjs');
+const poolStatusScript = path.join(currentDir, 'pool-status.mjs');
+const poolCollectScript = path.join(currentDir, 'pool-collect.mjs');
+const poolReportScript = path.join(currentDir, 'pool-report.mjs');
 
 function readPlan() {
   const planFile = args.plan || args['plan-file'];
@@ -277,9 +280,9 @@ try {
     workerCount: workers.length,
     dispatched,
     next: {
-      status: `node C:\\Users\\22304\\.codex\\skills\\zcode-remote-relay\\scripts\\src\\pool-status.mjs --pool ${poolId}`,
-      collect: `node C:\\Users\\22304\\.codex\\skills\\zcode-remote-relay\\scripts\\src\\pool-collect.mjs --pool ${poolId}`,
-      report: `node C:\\Users\\22304\\.codex\\skills\\zcode-remote-relay\\scripts\\src\\pool-report.mjs --pool ${poolId}`
+      status: `node "${poolStatusScript}" --pool ${poolId}`,
+      collect: `node "${poolCollectScript}" --pool ${poolId}`,
+      report: `node "${poolReportScript}" --pool ${poolId}`
     }
   }, null, 2));
 } catch (error) {
