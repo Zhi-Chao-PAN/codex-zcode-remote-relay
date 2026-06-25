@@ -1,0 +1,13 @@
+{
+  "name": "zcode-remote-relay-scripts",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Codex -> ZCode Web Remote Control relay: scripts, codec, policy, and tests.",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

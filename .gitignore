@@ -1,0 +1,25 @@
+# Local relay credentials and runtime state
+.env
+.env.*
+!.env.example
+.bridge/
+jobs/
+pools/
+handoffs/
+results/
+*.lock
+
+# Node and test artifacts
+node_modules/
+coverage/
+.nyc_output/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp

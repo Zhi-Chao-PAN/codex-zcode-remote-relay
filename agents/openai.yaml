@@ -1,0 +1,4 @@
+interface:
+  display_name: "ZCode Remote Relay"
+  short_description: "Delegate bounded coding tasks to ZCode remote sessions."
+  default_prompt: "Use $zcode-remote-relay to delegate a bounded implementation task to ZCode and report the result back for Codex review."
