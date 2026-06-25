@@ -9,7 +9,7 @@ Use this skill to let Codex delegate a bounded task to ZCode, then inspect the r
 
 ## Core Workflow
 
-Prefer async delegation for tasks that may take more than 1-2 minutes. Use sync delegation only for short checks.
+Prefer hybrid delegation for tasks that may take more than 1-2 minutes: dispatch, wait for a bounded window, collect if complete, then hand off to heartbeat if still running. Use sync delegation only for very short checks.
 
 0. Prepare ZCode first. This is the preferred first command in every new Codex thread:
 
