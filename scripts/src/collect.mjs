@@ -72,6 +72,7 @@ ${resultText || '(No assistant result yet.)'}
   updateJob(jobId, {
     state,
     routeState: state,
+    error: undefined,
     collectedAt: completed ? new Date().toISOString() : undefined,
     resultPath,
     markerFound,

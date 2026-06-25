@@ -52,6 +52,7 @@ try {
   updateJob(jobId, {
     state,
     routeState: state,
+    error: undefined,
     lastCheckedAt: new Date().toISOString(),
     lastSnapshot: {
       title: analysis.summary.title,

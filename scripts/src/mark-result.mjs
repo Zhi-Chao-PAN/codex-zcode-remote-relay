@@ -22,6 +22,7 @@ try {
   const updated = updateJob(jobId, {
     state,
     routeState: state,
+    error: undefined,
     codexDecision: {
       state,
       note,
