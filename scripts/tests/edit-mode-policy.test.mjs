@@ -16,19 +16,25 @@ import {
 
 const isWindows = process.platform === 'win32';
 
+function expectedNormalizedPath(value) {
+  return /^[A-Za-z]:[\\/]/.test(value) || value.startsWith('\\\\')
+    ? path.win32.normalize(value)
+    : path.resolve(value);
+}
+
 // ---- inferCommonRoot ----
 
 test('inferCommonRoot finds common directory for sibling files', () => {
   const sep = isWindows ? '\\' : '/';
   const files = [`C:${sep}proj${sep}src${sep}a.js`, `C:${sep}proj${sep}src${sep}b.js`];
   const root = inferCommonRoot(files);
-  assert.equal(root, path.resolve(`C:${sep}proj${sep}src`));
+  assert.equal(root, expectedNormalizedPath(`C:${sep}proj${sep}src`));
 });
 
 test('inferCommonRoot returns the dir when single file given', () => {
   const sep = isWindows ? '\\' : '/';
   const root = inferCommonRoot([`C:${sep}proj${sep}src${sep}a.js`]);
-  assert.equal(root, path.resolve(`C:${sep}proj${sep}src`));
+  assert.equal(root, expectedNormalizedPath(`C:${sep}proj${sep}src`));
 });
 
 test('inferCommonRoot returns null for empty input', () => {
@@ -40,7 +46,7 @@ test('inferCommonRoot climbs up to find shared ancestor', () => {
   const sep = isWindows ? '\\' : '/';
   const files = [`C:${sep}proj${sep}src${sep}a.js`, `C:${sep}proj${sep}tests${sep}b.js`];
   const root = inferCommonRoot(files);
-  assert.equal(root, path.resolve(`C:${sep}proj`));
+  assert.equal(root, expectedNormalizedPath(`C:${sep}proj`));
 });
 
 // ---- isSafeAutoTrustRoot (the security gate) ----
@@ -118,7 +124,7 @@ test('resolveEditMode: direct-edit when owned files under trusted root override'
   });
   assert.equal(result.editMode, 'direct-edit');
   assert.equal(result.trustedDirectEdit, true);
-  assert.equal(result.trustedRoot, path.resolve('C:\\proj'));
+  assert.equal(result.trustedRoot, expectedNormalizedPath('C:\\proj'));
 });
 
 test('resolveEditMode: auto without trusted root defaults to patch-only', () => {

@@ -7,8 +7,18 @@ export function trustedEditRootsPath() {
   return path.join(relayHome(), 'trusted-editable-roots.json');
 }
 
+function isWindowsStylePath(value) {
+  return /^[A-Za-z]:[\\/]/.test(value) || value.startsWith('\\\\');
+}
+
+function pathApiFor(value) {
+  return isWindowsStylePath(value) ? path.win32 : path;
+}
+
 function normalizePath(value) {
-  return path.resolve(String(value || '').trim());
+  const raw = String(value || '').trim();
+  const pathApi = pathApiFor(raw);
+  return pathApi === path.win32 ? pathApi.normalize(raw) : pathApi.resolve(raw);
 }
 
 function comparable(value) {
@@ -72,18 +82,21 @@ export function removeTrustedEditRoot(rootPath) {
 function isInside(candidate, root) {
   const candidateFull = normalizePath(candidate);
   const rootFull = normalizePath(root);
-  const relative = path.relative(rootFull, candidateFull);
-  return relative === '' || Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
+  const pathApi = pathApiFor(candidateFull) === path.win32 || pathApiFor(rootFull) === path.win32
+    ? path.win32
+    : path;
+  const relative = pathApi.relative(rootFull, candidateFull);
+  return relative === '' || Boolean(relative) && !relative.startsWith('..') && !pathApi.isAbsolute(relative);
 }
 
 export function inferCommonRoot(files = []) {
   const normalizedFiles = normalizeList(files).map(file => normalizePath(file));
   if (!normalizedFiles.length) return null;
-  const dirs = normalizedFiles.map(file => path.dirname(file));
+  const dirs = normalizedFiles.map(file => pathApiFor(file).dirname(file));
   let common = dirs[0];
   for (const dir of dirs.slice(1)) {
     while (common && !isInside(dir, common)) {
-      const parent = path.dirname(common);
+      const parent = pathApiFor(common).dirname(common);
       if (parent === common) return null;
       common = parent;
     }
@@ -122,7 +135,7 @@ function hasDenySegment(candidate) {
 export function isSafeAutoTrustRoot(candidate) {
   if (!candidate) return false;
   const full = normalizePath(candidate);
-  const parsed = path.parse(full);
+  const parsed = pathApiFor(full).parse(full);
   if (full === parsed.root) return false;
   if (hasDenySegment(full)) return false;
   return true;
@@ -228,4 +241,3 @@ export function editPolicyPromptBlock(worker) {
   }
   return `\nRelay edit policy:\n- editMode: read-only\n- Do not modify files directly.\n`;
 }
-
