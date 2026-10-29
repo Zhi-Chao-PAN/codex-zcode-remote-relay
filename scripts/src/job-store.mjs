@@ -4,7 +4,9 @@ import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 
 export function relayHome() {
-  return path.join(os.homedir(), '.codex', 'zcode-remote-relay');
+  return process.env.ZCODE_RELAY_HOME
+    ? path.resolve(process.env.ZCODE_RELAY_HOME)
+    : path.join(os.homedir(), '.codex', 'zcode-remote-relay');
 }
 
 export function jobsDir() {

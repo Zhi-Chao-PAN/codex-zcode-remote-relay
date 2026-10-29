@@ -1,5 +1,7 @@
 # Codex ZCode Remote Relay
 
+[![Offline relay tests](https://github.com/Zhi-Chao-PAN/codex-zcode-remote-relay/actions/workflows/ci.yml/badge.svg)](https://github.com/Zhi-Chao-PAN/codex-zcode-remote-relay/actions/workflows/ci.yml)
+
 Codex ZCode Remote Relay is a local multi-agent orchestration experiment: Codex
 acts as the commander, architect, reviewer, and integration gate, while ZCode
 workers execute bounded subtasks with configured third-party models.
@@ -112,10 +114,18 @@ cd scripts
 npm test
 ```
 
-Current local baseline:
+CI runs this suite on Linux, Windows, and macOS with Node 24. Tests use fake
+WebSocket adapters and do not connect to live desktop clients, spend model quota,
+or prove compatibility with a particular ZCode release.
+
+Tests isolate persisted trust roots via `ZCODE_RELAY_HOME`; they do not change
+the operator’s normal relay state. Foreign Windows absolute paths are rejected
+by auto-trust on POSIX rather than being interpreted relative to the current directory.
+
+Recorded local baseline:
 
 ```text
-138 tests passed
+139 tests passed
 ```
 
 Covered areas include:

@@ -135,6 +135,10 @@ export function ensureTrustedRootForFiles(files = [], {
   preferredRoot,
   dryRun = false
 } = {}) {
+  // A Windows absolute path on POSIX must not resolve to the current directory.
+  if (process.platform !== 'win32' && normalizeList(files).some(file => path.win32.isAbsolute(file) && !path.isAbsolute(file))) {
+    return { trustedRoot: null, added: false, wouldAdd: false, autoTrustUsed: false, error: 'Refusing foreign-platform absolute paths' };
+  }
   const trusted = trustedRootForFiles(files);
   if (trusted) return { trustedRoot: trusted, added: false, wouldAdd: false, autoTrustUsed: false };
   if (!parseBoolean(autoTrust)) return { trustedRoot: null, added: false, wouldAdd: false, autoTrustUsed: false };
