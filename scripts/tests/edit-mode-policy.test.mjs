@@ -71,9 +71,11 @@ test('isSafeAutoTrustRoot rejects denied segments', () => {
 
 test('isSafeAutoTrustRoot accepts a path with no denied segment', () => {
   // Note: any path under Users/ is auto-trust-denied by design; auto-trust is
-  // intentionally stricter than manual addTrustedEditRoot. Use a non-Users path.
-  assert.equal(isSafeAutoTrustRoot('E:\\dev\\myapp'), true);
-  assert.equal(isSafeAutoTrustRoot('D:\\projects\\app'), true);
+  // intentionally stricter than manual addTrustedEditRoot. Use native absolute
+  // paths so a Windows fixture cannot resolve beneath a POSIX runner's cwd.
+  const root = path.parse(process.cwd()).root;
+  assert.equal(isSafeAutoTrustRoot(path.join(root, 'dev', 'myapp')), true);
+  assert.equal(isSafeAutoTrustRoot(path.join(root, 'projects', 'app')), true);
 });
 
 test('isSafeAutoTrustRoot denies paths under Users (stricter than manual trust)', () => {
