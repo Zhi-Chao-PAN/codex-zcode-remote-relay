@@ -1,7 +1,8 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import os from 'node:os';
+import fs from 'node:fs';
 import {
   inferCommonRoot,
   isSafeAutoTrustRoot,
@@ -15,6 +16,10 @@ import {
 } from '../src/edit-mode-policy.mjs';
 
 const isWindows = process.platform === 'win32';
+const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'relay-policy-tests-'));
+process.env.ZCODE_RELAY_HOME = stateDir;
+after(() => fs.rmSync(stateDir, { recursive: true, force: true }));
+const projectRoot = path.resolve(os.tmpdir(), 'relay-owned-project');
 
 // ---- inferCommonRoot ----
 
@@ -66,9 +71,11 @@ test('isSafeAutoTrustRoot rejects denied segments', () => {
 
 test('isSafeAutoTrustRoot accepts a path with no denied segment', () => {
   // Note: any path under Users/ is auto-trust-denied by design; auto-trust is
-  // intentionally stricter than manual addTrustedEditRoot. Use a non-Users path.
-  assert.equal(isSafeAutoTrustRoot('E:\\dev\\myapp'), true);
-  assert.equal(isSafeAutoTrustRoot('D:\\projects\\app'), true);
+  // intentionally stricter than manual addTrustedEditRoot. Use native absolute
+  // paths so a Windows fixture cannot resolve beneath a POSIX runner's cwd.
+  const root = path.parse(process.cwd()).root;
+  assert.equal(isSafeAutoTrustRoot(path.join(root, 'dev', 'myapp')), true);
+  assert.equal(isSafeAutoTrustRoot(path.join(root, 'projects', 'app')), true);
 });
 
 test('isSafeAutoTrustRoot denies paths under Users (stricter than manual trust)', () => {
@@ -113,12 +120,12 @@ test('resolveEditMode: direct-edit when owned files under trusted root override'
   const result = resolveEditMode({
     poolType: 'editable',
     requestedEditMode: 'auto',
-    ownedFiles: ['C:\\proj\\src\\a.js'],
-    trustedRootOverride: { path: 'C:\\proj' }
+    ownedFiles: [path.join(projectRoot, 'src', 'a.js')],
+    trustedRootOverride: { path: projectRoot }
   });
   assert.equal(result.editMode, 'direct-edit');
   assert.equal(result.trustedDirectEdit, true);
-  assert.equal(result.trustedRoot, path.resolve('C:\\proj'));
+  assert.equal(result.trustedRoot, projectRoot);
 });
 
 test('resolveEditMode: auto without trusted root defaults to patch-only', () => {
@@ -178,8 +185,7 @@ test('editPolicyPromptBlock: read-only is terse', () => {
   assert.match(block, /editMode: read-only/);
 });
 
-// ---- trusted-edit-roots persistence (uses real ~/.codex/zcode-remote-relay) ----
-// These mutate the live trusted-roots file, so we add then remove to restore state.
+// ---- persistence is isolated to a temporary relay state directory ----
 
 test('addTrustedEditRoot / removeTrustedEditRoot round-trips a temp entry', () => {
   const tempDir = path.join(os.tmpdir(), `zcode-relay-test-${Date.now()}`);
@@ -210,7 +216,8 @@ test('addTrustedEditRoot / removeTrustedEditRoot round-trips a temp entry', () =
 // ---- ensureTrustedRootForFiles: dry-run does not write ----
 
 test('ensureTrustedRootForFiles: dryRun reports wouldAdd without writing', () => {
-  const tempDir = path.join(os.tmpdir(), `zcode-relay-dry-${Date.now()}`);
+  // No files are written; use a native path outside the denied Users tree.
+  const tempDir = path.join(path.parse(process.cwd()).root, 'relay-test-projects', `dry-${Date.now()}`);
   const before = loadTrustedEditRoots();
   const result = ensureTrustedRootForFiles([path.join(tempDir, 'a.js')], { autoTrust: true, dryRun: true });
   assert.equal(result.wouldAdd, true);
@@ -220,7 +227,8 @@ test('ensureTrustedRootForFiles: dryRun reports wouldAdd without writing', () =>
 });
 
 test('ensureTrustedRootForFiles: refuses unsafe root even with autoTrust', () => {
-  const result = ensureTrustedRootForFiles(['C:\\Users\\Example\\evil.js'], { autoTrust: true });
+  const unsafe = path.join(path.parse(process.cwd()).root, 'Users', 'Example', 'evil.js');
+  const result = ensureTrustedRootForFiles([unsafe], { autoTrust: true });
   assert.equal(result.trustedRoot, null);
   assert.equal(result.wouldAdd, false);
   assert.match(result.error || '', /unsafe root|Refusing/i);
@@ -231,4 +239,13 @@ test('ensureTrustedRootForFiles: autoTrust=false returns null without error', ()
   const result = ensureTrustedRootForFiles([path.join(tempDir, 'a.js')], { autoTrust: false });
   assert.equal(result.trustedRoot, null);
   assert.equal(result.autoTrustUsed, false);
+});
+
+// A foreign absolute path previously inferred cwd and could auto-trust it.
+test('auto-trust rejects Windows absolute paths on POSIX without writing', { skip: isWindows }, () => {
+  const before = loadTrustedEditRoots();
+  const result = ensureTrustedRootForFiles(['C:\\Users\\Example\\evil.js'], { autoTrust: true });
+  assert.equal(result.trustedRoot, null);
+  assert.match(result.error, /foreign-platform/);
+  assert.deepEqual(loadTrustedEditRoots(), before);
 });
